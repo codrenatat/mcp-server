@@ -1,32 +1,23 @@
-# Functions from the mcp python sdk 
 from mcp.server.fastmcp import FastMCP
-from dotenv import load_dotenv
+from tools import get_current_price  # Importar tu función desde tools.py
 
-load_dotenv("../.env")
-
-# Creating our MCP server
-# Similar to FastAPI 
-# If http specify port and host if not standart io 
+# Crear servidor
 mcp = FastMCP(
-    name = "Calculator",
-    host = "0.0.0.0",   # Only used for SSE transport (localhost)
-    port = 8050,    # Only used for SSE transport (set to any port)
+    name="Stock Price Server",
+    host="0.0.0.0",
+    port=8050,
 )
 
-#  Add a simple calculator tool
+# funcion que se va a usar en el cliente
 @mcp.tool()
-def add(a: int, b: int) -> int:
-    """Add two numbers together"""
-    return a + b
+def get_current_price_tool(symbol: str) -> str:
+    """
+    Wrapper MCP para la función externa.
+    """
+    return get_current_price(symbol)
 
-# Run the server
+
+# ejecuta el servidor
 if __name__ == "__main__":
-    transport = "sse"
-    if transport == "stdio":
-        print("Running mcp server with stdio transport")
-        mcp.run(transport = "stdio")
-    elif transport == "sse":
-        print("Running server with SSE transport")
-        mcp.run(transport = "sse")
-    else:
-        raise ValueError(f"Unknown transport: {transport}")
+    print("Iniciando servidor MCP con stdio")
+    mcp.run(transport="stdio")
