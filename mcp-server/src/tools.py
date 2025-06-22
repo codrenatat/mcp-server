@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from typing import Optional
 
 # Load environment variables
-API_KEY = ""
 
 load_dotenv()
 
@@ -551,7 +550,6 @@ def get_ipo_calendar() -> dict:
         return data
     else:
         return {"error": "Failed to fetch IPO calendar"}
-
 
 def get_currency_exchange_rate(from_currency: str, to_currency: str) -> dict:
     """Fetch exchange rate between two currencies from Alpha Vantage."""
@@ -1161,3 +1159,4 @@ def get_nonfarm_payroll() -> dict:
         return {"error": "Failed to fetch data"}
     
 
+        return {"error": "Failed to fetch data"}
