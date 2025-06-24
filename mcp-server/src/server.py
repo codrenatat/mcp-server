@@ -365,7 +365,7 @@ async def get_nonfarm_payrolls_tool() -> dict:
 
 # Run the server
 if __name__ == "__main__":
-    transport = "sse"
+    transport = "stdio" #change from sse
     if transport == "stdio":
         print("Running mcp server with stdio transport")
         mcp.run(transport = "stdio")
