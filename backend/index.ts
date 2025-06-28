@@ -21,7 +21,7 @@ await client.connect(transport);
 const result = await client.callTool({
   name: "get_current_price_tool", 
   arguments: {
-    symbol: "AAPL",
+  symbol: "AAPL",
   },
 });
 
