@@ -1101,7 +1101,6 @@ async def get_rocr_data_tool(symbol: str, interval: str = "daily", time_period: 
     except Exception as e:
         return f"Error getting ROCR data for {symbol} with series type {series_type}: {str(e)}"
 
-# Corrección para el endpoint del mama_data_tool
 @mcp.tool()
 @app.get("/get_mama_data/{symbol}/{series_type}")
 async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:

@@ -208,7 +208,6 @@ def get_market_status() -> dict:
         return response.json()
     return {"error": "Failed to fetch market status"}
 
-
 def get_historical_options_simple(symbol: str, date: Optional[str] = None, datatype: str = "json") -> dict:
     if not API_KEY:
         return {"error": "API key not configured"}
