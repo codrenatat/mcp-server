@@ -15,8 +15,6 @@ mcp = FastMCP(
 app = FastAPI()
 
 @mcp.tool()
-
-@mcp.tool()
 @app.get("/get_current_price/{symbol}")
 async def get_current_price_tool(symbol: str) -> str:
     """
