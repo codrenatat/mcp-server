@@ -5,7 +5,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
 const transport = new StdioClientTransport({
   command: "python",
-  args: ["C:/Users/renis/Documents/PAP/mcp-server/mcp-server/src/server.py"], 
+  args: ["../mcp-server/src/server.py"], 
 });
 
 // Create MCP client instance

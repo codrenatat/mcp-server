@@ -9,7 +9,7 @@ from tools import *
 mcp = FastMCP(
     name = "Alpha Vantage MCP Server",
     host = "0.0.0.0",   # Only used for SSE transport (localhost)
-    port = 8050,    # Only used for SSE transport (set to any port)
+    port = 8080,    # Only used for SSE transport (set to any port)
 )
 
 app = FastAPI()
@@ -1112,7 +1112,7 @@ async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: 
 
 # Run the server
 if __name__ == "__main__":
-    transport = "sse"
+    transport = "stdio"
     if transport == "stdio":
         print("Running mcp server with stdio transport")
         mcp.run(transport="stdio")
