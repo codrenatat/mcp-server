@@ -1916,3 +1916,901 @@ def get_rocr_values(symbol: str, interval: str = "daily", time_period: int = 60,
             return {"error": "Invalid data returned or no data available"}
     else:
         return {"error": "Failed to fetch data"}
+
+def get_aroon_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AROON",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: AROON" in data:
+            return data["Technical Analysis: AROON"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_aroonosc_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AROONOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: AROONOSC" in data:
+            return data["Technical Analysis: AROONOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_mfi_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MFI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MFI" in data:
+            return data["Technical Analysis: MFI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_trix_values(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRIX",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TRIX" in data:
+            return data["Technical Analysis: TRIX"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_ultosc_values(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ULTOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "timeperiod1": timeperiod1,
+        "timeperiod2": timeperiod2,
+        "timeperiod3": timeperiod3,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ULTOSC" in data:
+            return data["Technical Analysis: ULTOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_dx_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DX",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: DX" in data:
+            return data["Technical Analysis: DX"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_minus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DI" in data:
+            return data["Technical Analysis: MINUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPRICE
+
+def get_midprice_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPRICE",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPRICE" in data:
+            return data["Technical Analysis: MIDPRICE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPRICE
+
+def get_midprice_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPRICE",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPRICE" in data:
+            return data["Technical Analysis: MIDPRICE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# SAR
+
+def get_sar_values(symbol: str, interval: str = "daily", acceleration: float = 0.02, maximum: float = 0.2) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "SAR",
+        "symbol": symbol,
+        "interval": interval,
+        "acceleration": acceleration,
+        "maximum": maximum,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: SAR" in data:
+            return data["Technical Analysis: SAR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# TRANGE
+
+def get_trange_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRANGE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TRANGE" in data:
+            return data["Technical Analysis: TRANGE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# ATR
+
+def get_atr_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ATR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ATR" in data:
+            return data["Technical Analysis: ATR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# NATR
+
+def get_natr_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "NATR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: NATR" in data:
+            return data["Technical Analysis: NATR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# AD
+
+def get_ad_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AD",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: Chaikin A/D" in data:
+            return data["Technical Analysis: Chaikin A/D"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# ADOSC
+
+def get_adosc_values(symbol: str, interval: str = "daily", fastperiod: int = 3, slowperiod: int = 10) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ADOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ADOSC" in data:
+            return data["Technical Analysis: ADOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_obv_values(symbol: str, interval: str = "daily") -> dict:
+    """
+    Fetch On Balance Volume (OBV) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "OBV",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: OBV" in data:
+            return data["Technical Analysis: OBV"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_TRENDLINE
+
+def get_ht_trendline_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_TRENDLINE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_TRENDLINE" in data:
+            return data["Technical Analysis: HT_TRENDLINE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_SINE
+
+def get_ht_sine_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_SINE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_SINE" in data:
+            return data["Technical Analysis: HT_SINE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_TRENDMODE
+
+def get_ht_trendmode_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_TRENDMODE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_TRENDMODE" in data:
+            return data["Technical Analysis: HT_TRENDMODE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_DCPERIOD
+
+def get_ht_dcperiod_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_DCPERIOD",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_DCPERIOD" in data:
+            return data["Technical Analysis: HT_DCPERIOD"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_DCPHASE
+
+def get_ht_dcphase_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_DCPHASE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_DCPHASE" in data:
+            return data["Technical Analysis: HT_DCPHASE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_PHASOR
+
+def get_ht_phasor_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_PHASOR",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_PHASOR" in data:
+            return data["Technical Analysis: HT_PHASOR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_obv_values(symbol: str, interval: str = "daily") -> dict:
+    """
+    Fetch On Balance Volume (OBV) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "OBV",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: OBV" in data:
+            return data["Technical Analysis: OBV"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}    
