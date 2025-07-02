@@ -1410,15 +1410,3 @@ if __name__ == "__main__":
         mcp.run(transport="sse")
     else:
         raise ValueError(f"Unknown transport: {transport}")
-
-# Run the server
-if __name__ == "__main__":
-    transport = "stdio"
-    if transport == "stdio":
-        print("Running mcp server with stdio transport")
-        mcp.run(transport="stdio")
-    elif transport == "sse":
-        print("Running server with SSE transport")
-        mcp.run(transport="sse")
-    else:
-        raise ValueError(f"Unknown transport: {transport}")
