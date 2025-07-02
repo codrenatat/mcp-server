@@ -9,12 +9,10 @@ from tools import *
 mcp = FastMCP(
     name = "Alpha Vantage MCP Server",
     host = "0.0.0.0",   # Only used for SSE transport (localhost)
-    port = 8050,    # Only used for SSE transport (set to any port)
+    port = 8080,    # Only used for SSE transport (set to any port)
 )
 
 app = FastAPI()
-
-@mcp.tool()
 
 @mcp.tool()
 @app.get("/get_current_price/{symbol}")
@@ -1101,7 +1099,6 @@ async def get_rocr_data_tool(symbol: str, interval: str = "daily", time_period: 
     except Exception as e:
         return f"Error getting ROCR data for {symbol} with series type {series_type}: {str(e)}"
 
-# Corrección para el endpoint del mama_data_tool
 @mcp.tool()
 @app.get("/get_mama_data/{symbol}/{series_type}")
 async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
@@ -1115,7 +1112,7 @@ async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: 
 
 # Run the server
 if __name__ == "__main__":
-    transport = "sse"
+    transport = "stdio"
     if transport == "stdio":
         print("Running mcp server with stdio transport")
         mcp.run(transport="stdio")
