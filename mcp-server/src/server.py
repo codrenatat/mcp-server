@@ -9,12 +9,10 @@ from tools import *
 mcp = FastMCP(
     name = "Alpha Vantage MCP Server",
     host = "0.0.0.0",   # Only used for SSE transport (localhost)
-    port = 8050,    # Only used for SSE transport (set to any port)
+    port = 8080,    # Only used for SSE transport (set to any port)
 )
 
 app = FastAPI()
-
-@mcp.tool()
 
 @mcp.tool()
 @app.get("/get_current_price/{symbol}")
@@ -1404,6 +1402,18 @@ async def get_ht_phasor_data_tool(symbol: str, interval: str = "daily") -> dict:
 # Run the server
 if __name__ == "__main__":
     transport = "sse"
+    if transport == "stdio":
+        print("Running mcp server with stdio transport")
+        mcp.run(transport="stdio")
+    elif transport == "sse":
+        print("Running server with SSE transport")
+        mcp.run(transport="sse")
+    else:
+        raise ValueError(f"Unknown transport: {transport}")
+
+# Run the server
+if __name__ == "__main__":
+    transport = "stdio"
     if transport == "stdio":
         print("Running mcp server with stdio transport")
         mcp.run(transport="stdio")

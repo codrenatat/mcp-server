@@ -57,7 +57,7 @@ def get_stock_price(symbol: str) -> dict:
         "function": "TIME_SERIES_INTRADAY",
         "symbol": symbol,
         "interval": "1min",
-        "apikey": api_key
+        "apikey": API_KEY
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -506,7 +506,7 @@ def get_listing_delisting_status() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "LISTING_STATUS",
-        "apikey": api_key
+        "apikey": API_KEY
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -523,7 +523,7 @@ def get_earnings_calendar() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "EARNINGS_CALENDAR",
-        "apikey": api_key
+        "apikey": API_KEY
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -540,7 +540,7 @@ def get_ipo_calendar() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "IPO_CALENDAR",
-        "apikey": api_key
+        "apikey": API_KEY
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -2813,4 +2813,4 @@ def get_obv_values(symbol: str, interval: str = "daily") -> dict:
         if "Technical Analysis: OBV" in data:
             return data["Technical Analysis: OBV"]
         return {"error": "Invalid data returned or no data available"}
-    return {"error": "Failed to fetch data"}
+    return {"error": "Failed to fetch data"}    
