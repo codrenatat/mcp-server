@@ -665,15 +665,750 @@ async def get_nonfarm_payrolls_tool() -> dict:
         return get_nonfarm_payroll()
     except Exception as e:
         return f"Error getting non-farm payrolls data: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_sma_data/{symbol}/{series_type}")
+async def get_sma_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Simple Moving Average (SMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        SMA data
+    """
+    try:
+        return get_sma_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting SMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_ema_data/{symbol}/{series_type}")
+async def get_ema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Exponential Moving Average (EMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        EMA data
+    """
+    try:
+        return get_ema_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting EMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_wma_data/{symbol}/{series_type}")
+async def get_wma_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Weighted Moving Average (WMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        WMA data
+    """
+    try:
+        return get_wma_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting WMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_dema_data/{symbol}/{series_type}")
+async def get_dema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Double Exponential Moving Average (DEMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        DEMA data
+    """
+    try:
+        return get_dema_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting DEMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_tema_data/{symbol}/{series_type}")
+async def get_tema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Triple Exponential Moving Average (TEMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        TEMA data
+    """
+    try:
+        return get_tema_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting DEMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_trima_data/{symbol}/{series_type}")
+async def get_trima_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Triangular Moving Average (TRIMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        TRIMA data
+    """
+    try:
+        return get_trima_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting TRIMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_kama_data/{symbol}/{series_type}")
+async def get_kama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Kaufman Adaptive Moving Average (KAMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        KAMA data
+    """
+    try:
+        return get_kama_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting KAMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_mama_data/{symbol}/{series_type}")
+async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the MESA Adaptive Moving Average (MAMA) data for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        MAMA data
+    """
+    try:
+        return get_kama_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_vwap_data/{symbol}")
+async def get_vwap_data_tool(symbol: str, interval: str = "daily") -> dict:
+    """
+    Gets the Volume Weighted Average Price (VWAP) data for a given symbol.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        VWAP data
+    """
+    try:
+        return get_vwap_values(symbol, interval)
+    except Exception as e:
+        return f"Error getting VWAP data for {symbol}: {str(e)}"
+
+@mcp.tool()
+@app.get("/get_tthree_data/{symbol}/{series_type}")
+async def get_tthree_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Triple Exponential Moving Average (T3) values for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        MAMA data
+    """
+    try:
+        return get_tthree_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_macd_data/{symbol}/{series_type}")
+async def get_macd_data_tool(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
+                    slowperiod: int = 26, signalperiod: int = 9) -> dict:
+    """
+    Gets the Moving Average Convergence Divergence (MACD) values for a given symbol and series type.
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+        fastperiod: Fast period for MACD
+        slowperiod: Slow period for MACD
+        signalperiod: Signal period for MACD
+    Returns:
+        MACD data
+    """
+    try: 
+        return get_macd_values(symbol, interval, series_type, fastperiod, slowperiod, signalperiod)
+    except Exception as e:
+        return f"Error getting MACD data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_macdext_data/{symbol}/{series_type}")
+async def get_macdext_data_tool(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
+                    slowperiod: int = 26, signalperiod: int = 9) -> dict:
+    """
+    Gets the Moving Average Convergence Divergence (MACDEXT) values for a given symbol and series type.
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+        fastperiod: Fast period for MACDEXT
+        slowperiod: Slow period for MACDEXT
+        signalperiod: Signal period for MACDEXT
+    Returns:
+        MACD data
+    """
+    try: 
+        return get_macdext_values(symbol, interval, series_type, fastperiod, slowperiod, signalperiod)
+    except Exception as e:
+        return f"Error getting MACDEXT data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_stoch_data/{symbol}/{series_type}")
+async def get_stoch_data_tool(symbol: str, interval: str = "daily", fastk_period: int = 14, slowk_period: int = 3,
+                                slowd_period: int = 3, series_type: str = "close") -> dict:
+    """
+    Gets the Stochastic Oscillator (STOCH) values for a given symbol and series type.
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+        fastk_period: Fast period for STOCH
+        slowk_period: Slow period for STOCH
+    Returns:
+        MACD data
+    """
+    try: 
+        return get_stoch_oscillator_values(symbol, interval, series_type, fastk_period, slowk_period, slowd_period)
+    except Exception as e:
+        return f"Error getting STOCH data for {symbol} with series type {series_type}: {str(e)}"
+
+@mcp.tool()
+@app.get("/get_stochfast_data/{symbol}")
+async def get_stochf_data_tool(symbol: str, interval: str = "daily", fastk_period: int = 5, fastdperiod: int = 3) -> dict:
+    """
+    Gets the Stochastic Fast Oscillator (STOCHF) values for a given symbol.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    Returns:
+        STOCHF data
+    """
+    try: 
+        return get_stochf_oscillator_values(symbol, interval, fastk_period, fastdperiod)
+    except Exception as e:
+        return f"Error getting STOCHF data for {symbol}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_rsi_data/{symbol}/{series_type}")
+async def get_rsi_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the Relative Strength Index (RSI) values for a given symbol and series type.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        RSI data
+    """
+    try:
+        return get_rsi_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting RSI data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_stochrsi_data/{symbol}/{series_type}")
+async def get_stochrsi_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close",
+                        fastkperiod: int = 5, fastdperiod: int = 3) -> dict:
+    """
+    Gets the Stochastic Relative Strength Index (STOCHRSI) values for a given symbol and series type.
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        series_type: Type of the series (e.g.: close, open, high, low)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    Returns:
+        STOCHRSI data
+    """
+    try:
+        return get_stochrsi_values(symbol, interval, time_period, series_type, fastkperiod, fastdperiod)
+    except Exception as e:
+        return f"Error getting STOCHRSI data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_willr_data/{symbol}")
+async def get_wilrr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
+    """
+    Gets the Williams %R (WILLR) values for a given symbol.
+    
+    Args:
+        symbol: Stock symbol (e.g.: AAPL, MSFT)
+        interval: Time interval for the data (e.g.: daily, weekly, monthly)
+    
+    Returns:
+        WILLR data
+    """
+    try:
+        return get_willr_values(symbol, interval, time_period)
+    except Exception as e:
+        return f"Error getting WILLR data for {symbol}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_adx_data/{symbol}/{series_type}")
+async def get_adx_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Average Directional Movement Index (ADX) values for a given symbol.
+    """
+    try:
+        return get_adx_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting ADX data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_adxr_data/{symbol}/{series_type}")
+async def get_adxr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Average Directional Movement Rating Index (ADX) values for a given symbol.
+    """
+    try:
+        return get_adxr_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting ADXR data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_apo_data/{symbol}/{series_type}")
+async def get_apo_data_tool(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
+                   slowperiod: int = 26) -> dict:
+    """
+    Fetch Absolute Price Oscillator (APO) values for a given symbol.
+    """
+    try:
+        return get_apo_values(symbol, interval, series_type, fastperiod, slowperiod)
+    except Exception as e:
+        return f"Error getting APO data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_ppo_data/{symbol}/{series_type}")
+async def get_ppo_data_tool(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
+                   slowperiod: int = 26) -> dict:
+    """
+    Fetch Percentage Price Oscillator (PPO) values for a given symbol.
+    """
+    try:
+        return get_ppo_values(symbol, interval, series_type, fastperiod, slowperiod)
+    except Exception as e:
+        return f"Error getting PPO data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_mom_data/{symbol}/{series_type}")
+async def get_mom_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Momentum (MOM) values for a given symbol.
+    """
+    try:
+        return get_mom_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting MOM data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_bop_data/{symbol}")
+async def get_bop_data_tool(symbol: str, interval: str = "daily") -> dict:
+    """
+    Fetch Balance of Power (BOP) values for a given symbol.
+    """
+    try:
+        return get_bop_values(symbol, interval)
+    except Exception as e:
+        return f"Error getting BOP data for {symbol}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_cci_data/{symbol}")
+async def get_cci_data_tool(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
+    """
+    Fetch Commodity Channel Index (CCI) values for a given symbol.
+    """
+    try:
+        return get_cci_values(symbol, interval, time_period)
+    except Exception as e:
+        return f"Error getting CCI data for {symbol}: {str(e)}"
+
+@mcp.tool()
+@app.get("/get_cmo_data/{symbol}/{series_type}")
+async def get_cmo_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Chande momentum oscillator (CMO) values for a given symbol.
+    """
+    try:
+        return get_cmo_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting CMO data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_roc_data/{symbol}/{series_type}")
+async def get_roc_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch rate of change (ROC) values for a given symbol.
+    """
+    try:
+        return get_roc_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting ROC data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/get_rocr_data/{symbol}/{series_type}")
+async def get_rocr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch rate of change ratio (ROCR) values for a given symbol.
+    """
+    try:
+        return get_rocr_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting ROCR data for {symbol} with series type {series_type}: {str(e)}"
+
+@mcp.tool()
+@app.get("/get_mama_data/{symbol}/{series_type}")
+async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Gets the MESA Adaptive Moving Average (MAMA) data for a given symbol and series type.
+    """
+    try:
+        return get_mama_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
+
+@mcp.tool()
+@app.get("/get_aroon_data/{symbol}")
+async def get_aroon_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_aroon_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting AROON data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_aroonosc_data/{symbol}")
+async def get_aroonosc_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_aroonosc_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting AROONOSC data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_mfi_data/{symbol}")
+async def get_mfi_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_mfi_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MFI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_trix_data/{symbol}/{series_type}")
+async def get_trix_data_tool(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
+    try:
+        return get_trix_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return {"error": f"Error getting TRIX data for {symbol} with series type {series_type}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ultosc_data/{symbol}")
+async def get_ultosc_data_tool(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
+    try:
+        return get_ultosc_values(symbol, interval, timeperiod1, timeperiod2, timeperiod3)
+    except Exception as e:
+        return {"error": f"Error getting ULTOSC data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_dx_data/{symbol}")
+async def get_dx_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_dx_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting DX data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_minus_di_data/{symbol}")
+async def get_minus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_minus_di_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MINUS_DI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_plus_di_data/{symbol}")
+async def get_plus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_plus_di_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting PLUS_DI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_minus_dm_data/{symbol}")
+async def get_minus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_minus_dm_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MINUS_DM data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_plus_dm_data/{symbol}")
+async def get_plus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_plus_dm_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting PLUS_DM data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_aroon_data/{symbol}")
+async def get_aroon_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_aroon_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting AROON data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_aroonosc_data/{symbol}")
+async def get_aroonosc_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_aroonosc_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting AROONOSC data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_mfi_data/{symbol}")
+async def get_mfi_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_mfi_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MFI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_trix_data/{symbol}/{series_type}")
+async def get_trix_data_tool(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
+    try:
+        return get_trix_values(symbol, interval, time_period, series_type)
+    except Exception as e:
+        return {"error": f"Error getting TRIX data for {symbol} with series type {series_type}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ultosc_data/{symbol}")
+async def get_ultosc_data_tool(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
+    try:
+        return get_ultosc_values(symbol, interval, timeperiod1, timeperiod2, timeperiod3)
+    except Exception as e:
+        return {"error": f"Error getting ULTOSC data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_dx_data/{symbol}")
+async def get_dx_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_dx_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting DX data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_minus_di_data/{symbol}")
+async def get_minus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_minus_di_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MINUS_DI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_plus_di_data/{symbol}")
+async def get_plus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_plus_di_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting PLUS_DI data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_minus_dm_data/{symbol}")
+async def get_minus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_minus_dm_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MINUS_DM data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_plus_dm_data/{symbol}")
+async def get_plus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_plus_dm_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting PLUS_DM data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_bbands_data/{symbol}/{series_type}")
+async def get_bbands_data_tool(symbol: str, interval: str = "daily", time_period: int = 5, series_type: str = "close", nbdevup: float = 2, nbdevdn: float = 2, matype: int = 0) -> dict:
+    try:
+        return get_bbands_values(symbol, interval, time_period, series_type, nbdevup, nbdevdn, matype)
+    except Exception as e:
+        return {"error": f"Error getting BBANDS data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_midpoint_data/{symbol}")
+async def get_midpoint_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_midpoint_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MIDPOINT data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_midprice_data/{symbol}")
+async def get_midprice_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_midprice_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting MIDPRICE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_sar_data/{symbol}")
+async def get_sar_data_tool(symbol: str, interval: str = "daily", acceleration: float = 0.02, maximum: float = 0.2) -> dict:
+    try:
+        return get_sar_values(symbol, interval, acceleration, maximum)
+    except Exception as e:
+        return {"error": f"Error getting SAR data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_trange_data/{symbol}")
+async def get_trange_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_trange_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting TRANGE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_atr_data/{symbol}")
+async def get_atr_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_atr_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting ATR data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_natr_data/{symbol}")
+async def get_natr_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    try:
+        return get_natr_values(symbol, interval, time_period)
+    except Exception as e:
+        return {"error": f"Error getting NATR data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ad_data/{symbol}")
+async def get_ad_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ad_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting AD data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_adosc_data/{symbol}")
+async def get_adosc_data_tool(symbol: str, interval: str = "daily", fastperiod: int = 3, slowperiod: int = 10) -> dict:
+    try:
+        return get_adosc_values(symbol, interval, fastperiod, slowperiod)
+    except Exception as e:
+        return {"error": f"Error getting ADOSC data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_obv_values/{symbol}")
+async def get_obv_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_obv_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting OBV data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_trendline_data/{symbol}")
+async def get_ht_trendline_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_trendline_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_TRENDLINE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_sine_data/{symbol}")
+async def get_ht_sine_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_sine_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_SINE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_trendmode_data/{symbol}")
+async def get_ht_trendmode_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_trendmode_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_TRENDMODE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_dcperiod_data/{symbol}")
+async def get_ht_dcperiod_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_dcperiod_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_DCPERIOD data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_dcphase_data/{symbol}")
+async def get_ht_dcphase_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_dcphase_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_DCPHASE data for {symbol}: {str(e)}"}
+
+@mcp.tool()
+@app.get("/get_ht_phasor_data/{symbol}")
+async def get_ht_phasor_data_tool(symbol: str, interval: str = "daily") -> dict:
+    try:
+        return get_ht_phasor_values(symbol, interval)
+    except Exception as e:
+        return {"error": f"Error getting HT_PHASOR data for {symbol}: {str(e)}"}
+
 
 # Run the server
 if __name__ == "__main__":
     transport = "sse"
     if transport == "stdio":
         print("Running mcp server with stdio transport")
-        mcp.run(transport = "stdio")
+        mcp.run(transport="stdio")
     elif transport == "sse":
         print("Running server with SSE transport")
-        mcp.run(transport = "sse")
+        mcp.run(transport="sse")
     else:
         raise ValueError(f"Unknown transport: {transport}")
