@@ -2,7 +2,21 @@ import { Elysia } from "elysia";
 import { html } from "@elysiajs/html";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { cors } from "@elysiajs/cors";
+import conversations from './routes/conversations';
+import messages from './routes/messages';
 
+
+const app = new Elysia()
+  .use(cors())
+  .use(conversations)
+  .use(messages)
+
+console.log(
+  'MCP Client is running at ${app.server?.hostname}:${app.server?.port}'
+)
+
+/*
 const transport = new StdioClientTransport({
   command: "python",
   args: ["../mcp-server/src/server.py"], 
@@ -34,3 +48,4 @@ const app = new Elysia()
   .listen(3000);
 
 console.log("Server running at http://localhost:3000");
+*/
