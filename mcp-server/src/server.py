@@ -1109,6 +1109,17 @@ async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: 
         return get_mama_values(symbol, interval, time_period, series_type)
     except Exception as e:
         return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
+    
+@mcp.tool()
+@app.get("/chat_with_gpt/{prompt}")
+async def chat_with_gpt_tool(prompt: str) -> str:
+    """
+    Chat with GPT to generate responses.
+    """
+    try:
+        return chat_with_gpt(prompt)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # Run the server
 if __name__ == "__main__":
