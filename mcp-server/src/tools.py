@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from typing import Optional
+from openai import OpenAI
 
 # Load environment variables
 
@@ -2814,3 +2815,18 @@ def get_obv_values(symbol: str, interval: str = "daily") -> dict:
             return data["Technical Analysis: OBV"]
         return {"error": "Invalid data returned or no data available"}
     return {"error": "Failed to fetch data"}    
+
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+def chat_with_gpt(prompt: str) -> str:
+    """Interact with ChatGPT (OpenAI API) to generate responses."""
+    try:
+        response = client.completions.create(
+            model="gpt-4o-mini",  # barato
+            prompt=prompt,
+            max_tokens=150,
+            temperature=0.2  # randomness of the output
+        )
+        return response.choices[0].text.strip()  # Return the generated text
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
