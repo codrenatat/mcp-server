@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MCP Frontend Simple</title>
+
+  <!-- React y ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel para JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #141416 0%, #1f2024 100%);
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      display: flex;
+      width: 90vw;
+      height: 90vh;
+      box-shadow: 0 0 20px rgba(0,255,255,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1e1f23;
+      font-size: 16px;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #27292f;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 1.2rem;
+      color: #00f0ff;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      overflow-y: auto;
+      flex-grow: 1;
+      scrollbar-width: thin;
+      scrollbar-color: #00f0ff transparent;
+    }
+
+    .sidebar ul::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar ul::-webkit-scrollbar-thumb {
+      background-color: #00f0ff;
+      border-radius: 3px;
+    }
+
+    .sidebar li {
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #a1a1a1;
+      transition: background-color 0.3s, color 0.3s;
+      user-select: none;
+    }
+
+    .sidebar li:hover {
+      background-color: #00f0ff22;
+      color: #00f0ff;
+    }
+
+    .sidebar li.selected {
+      background-color: #00f0ff55;
+      color: #00f0ff;
+      font-weight: 600;
+      box-shadow: 0 0 10px #00f0ffaa;
+    }
+
+    .chatwindow {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #121214 url('https://www.alphavantage.co/images/logo.png') center center no-repeat;
+      background-size: 180px 180px;
+      padding: 1.5rem 2rem;
+      color: #e0e0e0;
+      position: relative;
+    }
+
+    .chatwindow::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(18,18,20,0.85);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .chatwindow > div.messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #00f0ff transparent;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chatwindow > div.messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chatwindow > div.messages::-webkit-scrollbar-thumb {
+      background-color: #00f0ff;
+      border-radius: 4px;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 1rem 1.4rem;
+      border-radius: 24px;
+      margin-bottom: 0.8rem;
+      line-height: 1.4;
+      font-size: 1rem;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 6px #00f0ff44;
+      user-select: text;
+      color: #e0e0e0;
+      font-weight: 500;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, #007aff, #00e0ff);
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 0 12px #00e0ffaa, inset 0 0 12px #00e0ffbb;
+    }
+
+    .message.assistant {
+      background: #222225;
+      color: #cdd6f4;
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+      box-shadow: inset 0 0 6px #00f0ff44;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 1rem 1.2rem;
+      border-radius: 24px;
+      border: none;
+      background: #222225;
+      color: #e0e0e0;
+      font-size: 1rem;
+      outline: none;
+      box-shadow: inset 0 0 6px #00f0ff44;
+      transition: box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      box-shadow: inset 0 0 10px #00f0ffaa;
+    }
+
+    button {
+      padding: 1rem 1.8rem;
+      border-radius: 24px;
+      border: none;
+      background: #00f0ff;
+      color: #000;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      user-select: none;
+    }
+
+    button:hover {
+      background: #00cddb;
+    }
+
+    button:active {
+      background: #008b8b;
+    }
+  </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel" src="./Sidebar.jsx"></script>
+<script type="text/babel" src="./ChatWindow.jsx"></script>
+<script type="text/babel" src="./App.jsx"></script>
+
+<script type="text/babel">
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+</script>
+
+</body>
+</html>
