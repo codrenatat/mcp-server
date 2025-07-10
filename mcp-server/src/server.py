@@ -1,1412 +1,2831 @@
-# Functions from the mcp python sdk 
-from mcp.server.fastmcp import FastMCP
-from fastapi import FastAPI
-from tools import *
+import os
+import requests
+from dotenv import load_dotenv
+from typing import Optional
+from openai import OpenAI
 
-# Creating our MCP server
-# Similar to FastAPI 
-# If http specify port and host if not standart io 
-mcp = FastMCP(
-    name = "Alpha Vantage MCP Server",
-    host = "0.0.0.0",   # Only used for SSE transport (localhost)
-    port = 8080,    # Only used for SSE transport (set to any port)
-)
+# Load environment variables
+api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
 
-app = FastAPI()
+load_dotenv()
 
-@mcp.tool()
-@app.get("/get_current_price/{symbol}")
-async def get_current_price_tool(symbol: str) -> str:
+def get_current_price(symbol: str) -> str:
     """
     Gets the current price of a stock from Alpha Vantage API.
     """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = (
+        "https://www.alphavantage.co/query"
+        f"?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=5min&apikey={api_key}"
+    )
+    
     try:
-        return get_current_price(symbol)
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Check if there's an error in the response
+        if "Error Message" in data:
+            return f"Error: Symbol {symbol} is not valid"
+        
+        if "Note" in data:
+            return "Error: API limit reached. Try again later."
+        
+        if "Time Series (5min)" not in data:
+            return f"Error: Could not get data for {symbol}"
+        
+        # Get most recent price
+        time_series = data["Time Series (5min)"]
+        latest_time = sorted(time_series.keys())[-1]
+        latest_data = time_series[latest_time]
+        latest_price = latest_data["4. close"]
+        
+        return f"{symbol}: ${latest_price} (updated: {latest_time})"
+        
+    except requests.RequestException as e:
+        return f"Connection error: {str(e)}"
     except Exception as e:
-        return f"Error getting current price for {symbol}: {str(e)}"
+        return f"Data processing error: {str(e)}"
 
-@mcp.tool()
-@app.get("/get_stock_price/{symbol}")
-async def get_stock_price_tool(symbol: str) -> dict:
+def get_stock_price(symbol: str) -> dict:
     """
     Get the latest intraday stock price.
     """
-    try:
-        return get_stock_price(symbol)
-    except Exception as e:
-        return f"Error getting stock price for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_INTRADAY",
+        "symbol": symbol,
+        "interval": "1min",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Time Series (1min)" in data:
+            return data["Time Series (1min)"]
+        return {"error": "Missing intraday data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_intraday/{symbol}")
-async def get_intraday_tool(symbol: str, interval: Optional[str] = "1min") -> dict:
+def get_intraday(symbol: str, interval: Optional[str] = "1min") -> dict:
     """
     Fetch intraday time series for a given stock symbol.
     """
-    try:
-        return get_intraday(symbol, interval)
-    except Exception as e:
-        return f"Error getting intraday data for {symbol} with interval {interval}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_INTRADAY",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Time Series ({})".format(interval) in data:
+            return data["Time Series ({})".format(interval)]
+        return {"error": "Missing intraday data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_daily_adjusted/{symbol}")
-async def get_daily_adjusted_tool(symbol: str) -> dict:
+def get_daily_adjusted(symbol: str) -> dict:
     """
     Fetch daily adjusted time series data for a given symbol.
     """
-    try:
-        return get_daily_adjusted(symbol)
-    except Exception as e:
-        return f"Error getting daily adjusted data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_DAILY_ADJUSTED",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Time Series (Daily)" in data:
+            return data["Time Series (Daily)"]
+        return {"error": "Missing daily adjusted data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_weekly/{symbol}")
-async def get_weekly_tool(symbol: str) -> dict:
+def get_weekly(symbol: str) -> dict:
     """
     Fetch weekly time series data for a given symbol.
     """
-    try:
-        return get_weekly(symbol)
-    except Exception as e:
-        return f"Error getting weekly data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_WEEKLY",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Weekly Time Series" in data:
+            return data["Weekly Time Series"]
+        return {"error": "Missing weekly data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_weekly_adjusted/{symbol}")
-async def get_weekly_adjusted_tool(symbol: str) -> dict:
+def get_weekly_adjusted(symbol: str) -> dict:
     """
     Fetch weekly adjusted time series data for a given symbol.
     """
-    try:
-        return get_weekly_adjusted(symbol)
-    except Exception as e:
-        return f"Error getting weekly adjusted data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_WEEKLY_ADJUSTED",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Weekly Adjusted Time Series" in data:
+            return data["Weekly Adjusted Time Series"]
+        return {"error": "Missing weekly adjusted data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_monthly/{symbol}")
-async def get_monthly_tool(symbol: str) -> dict:
+def get_monthly(symbol: str) -> dict:
     """
     Fetch monthly time series data for a given symbol.
     """
-    try:
-        return get_monthly(symbol)
-    except Exception as e:
-        return f"Error getting monthly data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_MONTHLY",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Monthly Time Series" in data:
+            return data["Monthly Time Series"]
+        return {"error": "Missing monthly data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_monthly_adjusted/{symbol}")
-async def get_monthly_adjusted_tool(symbol: str) -> dict:
+def get_monthly_adjusted(symbol: str) -> dict:
     """
     Fetch monthly adjusted time series data for a given symbol.
     """
-    try:
-        return get_monthly_adjusted(symbol)
-    except Exception as e:
-        return f"Error getting monthly adjusted data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TIME_SERIES_MONTHLY_ADJUSTED",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Monthly Adjusted Time Series" in data:
+            return data["Monthly Adjusted Time Series"]
+        return {"error": "Missing monthly adjusted data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_quote/{symbol}")
-async def get_quote_tool(symbol: str) -> dict:
+def get_quote(symbol: str) -> dict:
     """
     Fetch the current global quote for a given stock symbol.
     """
-    try:
-        return get_quote(symbol)
-    except Exception as e:
-        return f"Error getting quote for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "GLOBAL_QUOTE",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Global Quote" in data:
+            return data["Global Quote"]
+        return {"error": "Missing global quote data"}
+    return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_market_status")
-async def get_market_status_tool() -> dict:
+def get_market_status() -> dict:
     """
     Fetch the current global market status.
     """
-    try:
-        return get_market_status()
-    except Exception as e:
-        return f"Error getting market status: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MARKET_STATUS",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.json()
+    return {"error": "Failed to fetch market status"}
 
-@mcp.tool()
-@app.get("/get_historical_options/{symbol}")
-async def get_historical_options_tool(symbol: str, date: Optional[str] = None, datatype: str = "json") -> dict:
-    """
-    Fetch historical options data for a symbol, optionally for a specific date.
-    """
-    try:
-        return get_historical_options_simple(symbol, date, datatype)
-    except Exception as e:
-        return f"Error getting historical options for {symbol}: {str(e)}"
+def get_historical_options_simple(symbol: str, date: Optional[str] = None, datatype: str = "json") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {"function": "HISTORICAL_OPTIONS", "symbol": symbol, "apikey": api_key, "datatype": datatype}
+    if date:
+        params["date"] = date
+    response = requests.get(url, params=params, timeout=10)
+    response.raise_for_status()
+    if datatype == "json":
+        return response.json()
+    else:
+        return {"csv": response.text}
 
-@mcp.tool()
-@app.get("/get_news_sentiment/{symbol}")
-async def get_news_sentiment_tool(symbol: str) -> dict:
+def get_news_sentiment(symbol: str) -> dict:
     """
     Fetch news and sentiment trending data for a symbol.
     """
-    try:
-        return get_news_sentiment(symbol)
-    except Exception as e:
-        return f"Error getting news sentiment for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "NEWS_SENTIMENT",
+        "tickers": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_earnings_transcript/{symbol}")
-async def get_earnings_transcript_tool(symbol: str) -> dict:
+def get_earnings_transcript(symbol: str) -> dict:
     """
     Fetch earnings call transcript for a symbol.
     """
-    try:
-        return get_earnings_transcript(symbol)
-    except Exception as e:
-        return f"Error getting earnings transcript for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "EARNINGS_CALL_TRANSCRIPT",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_top_gainers_losers")
-async def get_top_gainers_losers_tool() -> dict:
+def get_top_gainers_losers() -> dict:
     """
     Fetch top gainers and losers data.
     """
-    try:
-        return get_top_gainers_losers()
-    except Exception as e:
-        return f"Error getting top gainers and losers: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TOP_GAINERS_LOSERS",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_insider_transactions/{symbol}")
-async def get_insider_transactions_tool(symbol: str) -> dict:
+def get_insider_transactions(symbol: str) -> dict:
     """
     Fetch insider transactions trending data for a symbol.
     """
-    try:
-        return get_insider_transactions(symbol)
-    except Exception as e:
-        return f"Error getting insider transactions for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "INSIDER_TRADING",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_analytics_fixed/{symbol}/{function_name}")
-async def get_analytics_fixed_tool(symbol: str, function_name: str, interval: str = "daily", time_period: int = 10, series_type: str = "close") -> dict:
+def get_analytics_fixed(symbol: str, function: str,
+                        interval: str = "daily", time_period: int = 10,
+                        series_type: str = "close") -> dict:
     """
-    Fetch fixed window technical indicator data (e.g., SMA, EMA, RSI).
+    Fetch fixed window technical indicator (e.g., SMA, EMA, RSI) data.
     """
-    try:
-        return get_analytics_fixed(symbol, function_name, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting analytics fixed for {symbol} function {function_name}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": function,
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
 
-@mcp.tool()
-@app.get("/get_analytics_sliding/{symbol}/{function_name}")
-async def get_analytics_sliding_tool(symbol: str, function_name: str, interval: str = "daily", time_period: int = 10, series_type: str = "close") -> dict:
+def get_analytics_sliding(symbol: str, function: str,
+                          interval: str = "daily", time_period: int = 10,
+                          series_type: str = "close") -> dict:
     """
     Fetch sliding window technical indicator data (requires premium API).
     """
-    try:
-        return get_analytics_sliding(symbol, function_name, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting analytics sliding for {symbol} function {function_name}: {str(e)}"
-
-@mcp.tool()
-@app.get("/get_fundamental_data/{symbol}")
-async def get_fundamental_data_tool(symbol: str) -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": function,
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_fundamental_data(symbol: str) -> dict:
     """
     Fetch fundamental data for a symbol.
     """
-    try:
-        return get_fundamental_data(symbol)
-    except Exception as e:
-        return f"Error getting fundamental data for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "OVERVIEW",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch fundamental data"}
 
-@mcp.tool()
-@app.get("/get_company_overview_trending")
-async def get_company_overview_trending_tool() -> dict:
+def get_company_overview_trending() -> dict:
     """
-    Fetch trending company overview data.
+    Fetch trending company overview data (e.g., most active companies).
     """
-    try:
-        return get_company_overview_trending()
-    except Exception as e:
-        return f"Error getting company overview trending data: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRENDING_COMPANY_OVERVIEW",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch trending company overview"}
 
-@mcp.tool()
-@app.get("/get_etf_profile_and_holdings/{symbol}")
-async def get_etf_profile_and_holdings_tool(symbol: str) -> dict:
+def get_etf_profile_and_holdings(symbol: str) -> dict:
     """
     Fetch ETF profile and holdings for a symbol.
     """
-    try:
-        return get_etf_profile_and_holdings(symbol)
-    except Exception as e:
-        return f"Error getting ETF profile and holdings for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ETF_HOLDINGS",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch ETF profile and holdings"}
 
-@mcp.tool()
-@app.get("/get_corporate_action_dividends/{symbol}")
-async def get_corporate_action_dividends_tool(symbol: str) -> dict:
+def get_corporate_action_dividends(symbol: str) -> dict:
     """
     Fetch corporate action dividend data for a symbol.
     """
-    try:
-        return get_corporate_action_dividends(symbol)
-    except Exception as e:
-        return f"Error getting corporate action dividends for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DIVIDEND_HISTORY",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch dividend data"}
 
-@mcp.tool()
-@app.get("/get_corporate_action_splits/{symbol}")
-async def get_corporate_action_splits_tool(symbol: str) -> dict:
+def get_corporate_action_splits(symbol: str) -> dict:
     """
     Fetch corporate action splits data for a symbol.
     """
-    try:
-        return get_corporate_action_splits(symbol)
-    except Exception as e:
-        return f"Error getting corporate action splits for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "SPLIT_HISTORY",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch split data"}
 
-@mcp.tool()
-@app.get("/get_income_statement/{symbol}")
-async def get_income_statement_tool(symbol: str) -> dict:
+def get_income_statement(symbol: str) -> dict:
     """
     Fetch income statement data for a company symbol.
     """
-    try:
-        return get_income_statement(symbol)
-    except Exception as e:
-        return f"Error getting income statement for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "INCOME_STATEMENT",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch income statement data"}
 
-@mcp.tool()
-@app.get("/get_balance_sheet/{symbol}")
-async def get_balance_sheet_tool(symbol: str) -> dict:
+def get_balance_sheet(symbol: str) -> dict:
     """
     Fetch the balance sheet data for a company symbol.
     """
-    try:
-        return get_balance_sheet(symbol)
-    except Exception as e:
-        return f"Error getting balance sheet for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BALANCE_SHEET",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch balance sheet data"}
 
-@mcp.tool()
-@app.get("/get_cash_flow/{symbol}")
-async def get_cash_flow_tool(symbol: str) -> dict:
+def get_cash_flow(symbol: str) -> dict:
     """
     Fetch the cash flow statement for a company symbol.
     """
-    try:
-        return get_cash_flow(symbol)
-    except Exception as e:
-        return f"Error getting cash flow for {symbol}: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CASH_FLOW",
+        "symbol": symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch cash flow data"}
 
-@mcp.tool()
-@app.get("/get_earnings_trending")
-async def get_earnings_trending_tool() -> dict:
+def get_earnings_trending() -> dict:
     """
     Fetch trending earnings data.
     """
-    try:
-        return get_earnings_trending()
-    except Exception as e:
-        return f"Error getting earnings trending data: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "EARNINGS_TRENDING",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch earnings trending data"}
 
-@mcp.tool()
-@app.get("/get_listing_delisting_status")
-async def get_listing_delisting_status_tool() -> dict:
+def get_listing_delisting_status() -> dict:
     """
     Fetch listing and delisting status data.
     """
-    try:
-        return get_listing_delisting_status()
-    except Exception as e:
-        return f"Error getting listing/delisting status data: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "LISTING_STATUS",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch listing/delisting status"}
 
-@mcp.tool()
-@app.get("/get_earnings_calendar")
-async def get_earnings_calendar_tool() -> dict:
+def get_earnings_calendar() -> dict:
     """
     Fetch earnings calendar data.
     """
-    try:
-        return get_earnings_calendar()
-    except Exception as e:
-        return f"Error getting earnings calendar data: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "EARNINGS_CALENDAR",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch earnings calendar"}
 
-@mcp.tool()
-@app.get("/get_ipo_calendar")
-async def get_ipo_calendar_tool() -> dict:
+def get_ipo_calendar() -> dict:
     """
     Fetch IPO calendar data.
     """
-    try:
-        return get_ipo_calendar()
-    except Exception as e:
-        return f"Error getting IPO calendar data: {str(e)}"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "IPO_CALENDAR",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch IPO calendar"}
 
-@app.get("/get_currency_exchange_rate/{from_currency}/{to_currency}")
-async def get_currency_exchange_rate_tool(from_currency: str, to_currency: str) -> dict:
-    """
-    Gets the current exchange rate between two currencies from Alpha Vantage API.
+def get_currency_exchange_rate(from_currency: str, to_currency: str) -> dict:
+    """Fetch exchange rate between two currencies from Alpha Vantage."""
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CURRENCY_EXCHANGE_RATE",
+        "from_currency": from_currency,
+        "to_currency": to_currency,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
     
-    Args:
-        from_currency: Source currency (e.g.: USD, EUR)
-    """
-    try:
-        return get_currency_exchange_rate(from_currency, to_currency)
-    except Exception as e:
-        return f"Error getting exchange rate for {from_currency} to {to_currency}: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Realtime Currency Exchange Rate" in data:
+            return data["Realtime Currency Exchange Rate"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_fx_daily_data/{from_symbol}/{to_symbol}")
-async def get_fx_daily_data_tool(from_symbol: str, to_symbol: str) -> dict:
-    """
-    Gets the daily time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage API.
-    """
-    try:
-        return get_fx_daily_data(from_symbol, to_symbol)
-    except Exception as e:
-        return f"Error getting FX daily data for {from_symbol} to {to_symbol}: {str(e)}"
+def get_fx_daily_data(from_symbol: str, to_symbol: str) -> dict:
+    """Fetch daily time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage."""
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "FX_DAILY",
+        "from_symbol": from_symbol,
+        "to_symbol": to_symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
     
-@mcp.tool()
-@app.get("/get_fx_weekly_data/{from_symbol}/{to_symbol}")
-async def get_fx_weekly_data_tool(from_symbol: str, to_symbol: str) -> dict:
-    """
-    Gets the weekly time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage API.
-    """
-    try:
-        return get_fx_weekly_data(from_symbol, to_symbol)
-    except Exception as e:
-        return f"Error getting FX weekly data for {from_symbol} to {to_symbol}: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series FX (Daily)" in data:
+            return data["Time Series FX (Daily)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_fx_monthly_data/{from_symbol}/{to_symbol}")
-async def get_fx_monthly_data_tool(from_symbol: str, to_symbol: str) -> dict:
-    """
-    Gets the monthly time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage API.
-    """
-    try:
-        return get_fx_monthly_data(from_symbol, to_symbol)
-    except Exception as e:
-        return f"Error getting FX monthly data for {from_symbol} to {to_symbol}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_digital_currency_daily_data/{symbol}/{market}")
-async def get_digital_currency_daily_data_tool(symbol: str, market: str) -> dict:
-    """
-    Gets the daily historical time series for a digital currency traded on a specific market from Alpha Vantage API.
-    """
-    try:
-        return get_digital_currency_daily_data(symbol, market)
-    except Exception as e:
-        return f"Error getting digital currency daily data for {symbol} on {market}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_digital_currency_weekly_data/{symbol}/{market}")
-async def get_digital_currency_weekly_data_tool(symbol: str, market: str) -> dict:
-    """
-    Gets the weekly historical time series for a digital currency traded on a specific market from Alpha Vantage API.
-    """
-    try:
-        return get_digital_currency_weekly_data(symbol, market)
-    except Exception as e:
-        return f"Error getting digital currency weekly data for {symbol} on {market}: {str(e)}"
+def get_fx_weekly_data(from_symbol: str, to_symbol: str) -> dict:
+    """Fetch weekly time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage."""
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "FX_WEEKLY",
+        "from_symbol": from_symbol,
+        "to_symbol": to_symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
 
-@mcp.tool()
-@app.get("/get_digital_currency_monthly_data/{symbol}/{market}")
-async def get_digital_currency_monthly_data_tool(symbol: str, market: str) -> dict:
-    """
-    Gets the monthly historical time series for a digital currency traded on a specific market from Alpha Vantage API.
-    """
-    try:
-        return get_digital_currency_monthly_data(symbol, market)
-    except Exception as e:
-        return f"Error getting digital currency monthly data for {symbol} on {market}: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series FX (Weekly)" in data:
+            return data["Time Series FX (Weekly)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_crude_oil_wti_data/")
-async def get_crude_oil_wti_data_tool(interval: str) -> dict:
-    """
-    Gets the daily, weekly, or monthly historical time series for the West Texas Intermediate (WTI) crude oil prices from Alpha Vantage API.
-    """
-    try:
-        return get_crude_oil_wti_data(interval)
-    except Exception as e:
-        return f"Error getting crude oil WTI data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_crude_oil_brent_data/{interval}")
-async def get_crude_oil_brent_data_tool(interval: str) -> dict:
-    """
-    Gets the daily, weekly, or monthly historical time series for the Brent crude oil prices from Alpha Vantage API.
-    """
-    try:
-        return get_crude_oil_brent_data(interval)
-    except Exception as e:
-        return f"Error getting crude oil Brent data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_natural_gas_data/{interval}")
-async def get_natural_gas_data_tool(interval: str) -> dict:
-    """
-    Gets the daily, weekly, or monthly historical time series for the natural gas prices from Alpha Vantage API.
-    """
-    try:
-        return get_natural_gas_data(interval)
-    except Exception as e:
-        return f"Error getting natural gas data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_copper_data/{interval}")
-async def get_copper_data_tool(interval: str) -> dict:
-    """
-    Gets the monthly, quarterly and annual global price of copper from Alpha Vantage API.
-    """
-    try:
-        return get_copper_data(interval)
-    except Exception as e:
-        return f"Error getting copper data for {interval}: {str(e)}"
+def get_fx_monthly_data(from_symbol: str, to_symbol: str) -> dict:
+    """Fetch monthly time series (timestamp, open, high, low, close) of the FX currency pair from Alpha Vantage."""
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "FX_MONTHLY",
+        "from_symbol": from_symbol,
+        "to_symbol": to_symbol,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
 
-@mcp.tool()
-@app.get("/get_aluminum_data/{interval}")
-async def get_aluminum_data_tool(interval: str) -> dict:
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series FX (Monthly)" in data:
+            return data["Time Series FX (Monthly)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_digital_currency_daily_data(symbol: str, market: str) -> dict:
     """
-    Gets the monthly, quarterly and annual global price of aluminum from Alpha Vantage API.
+    Fetch daily historical time series for a digital currency (e.g., BTC)
+    traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC).
     """
-    try:
-        return get_aluminum_data(interval)
-    except Exception as e:
-        return f"Error getting aluminum data for {interval}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DIGITAL_CURRENCY_DAILY",
+        "symbol": symbol,
+        "market": market,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
 
-@mcp.tool()
-@app.get("get_wheat_data/{interval}")
-async def get_wheat_data_tool(interval: str) -> dict:
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series (Digital Currency Daily)" in data:
+            return data["Time Series (Digital Currency Daily)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_digital_currency_weekly_data(symbol: str, market: str) -> dict:
     """
-    Gets the monthly, quarterly and annual global price of wheat from Alpha Vantage API.
+    Fetch weekly historical time series for a digital currency (e.g., BTC)
+    traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC).
     """
-    try:
-        return get_wheat_data(interval)
-    except Exception as e:
-        return f"Error getting wheat data for {interval}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DIGITAL_CURRENCY_WEEKLY",
+        "symbol": symbol,
+        "market": market,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
 
-@mcp.tool()
-@app.get("/get_corn_data/{interval}")
-async def get_corn_data_tool(interval: str) -> dict:
-    """
-    Gets the monthly, quarterly and annual global price of corn from Alpha Vantage API.
-    """
-    try:
-        return get_corn_data(interval)
-    except Exception as e:
-        return f"Error getting corn data for {interval}: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series (Digital Currency Weekly)" in data:
+            return data["Time Series (Digital Currency Weekly)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_cotton_data/{interval}")
-async def get_cotton_data_tool(interval: str) -> dict:
+def get_digital_currency_monthly_data(symbol: str, market: str) -> dict:
     """
-    Gets the monthly, quarterly and annual global price of cotton from Alpha Vantage API.
+    Fetch monthly historical time series for a digital currency (e.g., BTC)
+    traded on a specific market (e.g., EUR/Euro), refreshed daily at midnight (UTC).
     """
-    try:
-        return get_cotton_data(interval)
-    except Exception as e:
-        return f"Error getting cotton data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_sugar_data/{interval}")
-async def get_sugar_data_tool(interval: str) -> dict:
-    """
-    Gets the monthly, quarterly and annual global price of sugar from Alpha Vantage API.
-    """
-    try:
-        return get_sugar_data(interval)
-    except Exception as e:
-        return f"Error getting sugar data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_coffee_data/{interval}")
-async def get_coffee_data_tool(interval: str) -> dict:
-    """
-    Gets the monthly, quarterly and annual global price of coffee from Alpha Vantage API.
-    """
-    try:
-        return get_coffee_data(interval)
-    except Exception as e:
-        return f"Error getting coffee data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_all_commodities_data/{interval}")
-async def get_all_commodities_data_tool(interval: str) -> dict:
-    """
-    Gets the global price index of all commodities in monthly, quarterly, and annual temporal dimensions.
-    """
-    try:
-        return get_all_commodities_data(interval)
-    except Exception as e:
-        return f"Error getting all commodities data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_real_gdp_data/{interval}")
-async def get_real_gdp_data_tool(interval: str) -> dict:
-    """
-    Gets the real GDP data of the US economy in quarterly and annual temporal dimensions.
-    """
-    try:
-        return get_real_gdp(interval)
-    except Exception as e:
-        return f"Error getting real GDP data for {interval}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_real_gdp_per_capita_data/")
-async def get_real_gdp_per_capita_data_tool() -> dict:
-    """
-    Gets the real GDP per capita data quaterly of the US economy.
-    """
-    try:
-        return get_real_gdp_per_capita()
-    except Exception as e:
-        return f"Error getting real GDP per capita data: {str(e)}"
-    
-@mcp.tool()
-@app.get("get_treasury_yield/{interval}-{maturity}")
-async def get_treasury_yield_tool(interval: str, maturity: str) -> dict:
-    """
-    Gets the US Treasury yield data for a specific maturity and interval.
-    
-    Args:
-        interval: Interval of the data (e.g.: daily, weekly, monthly)
-        maturity: Maturity of the treasury yield (e.g.: 10Y, 30Y)
-    
-    Returns:
-        Treasury yield data
-    """
-    try:
-        return get_treasury_yield(interval, maturity)
-    except Exception as e:
-        return f"Error getting treasury yield data for {maturity} at {interval} interval: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_federal_funds_rate/{interval}")
-async def get_federal_funds_rate_tool(interval: str) -> dict:
-    """
-    Gets the Federal Funds Rate in the US data for a specific interval.
-    
-    Args:
-        interval: Interval of the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        Federal Funds Rate data
-    """
-    try:
-        return get_federal_funds_rate(interval)
-    except Exception as e:
-        return f"Error getting Federal Funds Rate data at {interval} interval: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_cpi_data/{interval}")
-async def get_cpi_data_tool(interval: str) -> dict:
-    """
-    Gets the Consumer Price Index (CPI) data in the US for a specific interval.
-    
-    Args:
-        interval: Interval of the data (monthly and semi-annual)
-    
-    Returns:
-        CPI data
-    """
-    try:
-        return get_cpi_data(interval)
-    except Exception as e:
-        return f"Error getting CPI data at {interval} interval: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_inflation_data")
-async def get_inflation_data_tool() -> dict:
-    """
-    Gets the inflation rate data in the US.
-    """
-    try:
-        return get_inflation()
-    except Exception as e:
-        return f"Error getting inflation data: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DIGITAL_CURRENCY_MONTHLY",
+        "symbol": symbol,
+        "market": market,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
 
-@mcp.tool()
-@app.get("/get_retail_sales")
-async def get_retail_sales_tool() -> dict:
-    """
-    Gets the monthly retail sales data in the US.
-    """
-    try:
-        return get_retail_sales()
-    except Exception as e:
-        return f"Error getting retail sales data: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Time Series (Digital Currency Monthly)" in data:
+            return data["Time Series (Digital Currency Monthly)"]
+        else:
+            return {"error": "Invalid data returned"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_durables")
-async def get_durables_tool() -> dict:
+def get_crude_oil_wti_data(interval: Optional[str]) -> dict:
     """
-    Gets the monthly manufacturers' new orders of durable goods in the US.
+    Fetch the West Texas Intermediate (WTI) crude oil prices in daily, weekly, and monthly horizons.
     """
-    try:
-        return get_durables()
-    except Exception as e:
-        return f"Error getting durable goods data: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "WTI",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
     
-@mcp.tool()
-@app.get("get_monthly_unemployment_rate")
-async def get_monthly_unemployment_rate_tool() -> dict:
-    """
-    Gets the monthly unemployment rate in the US.
-    """
-    try:
-        return get_monthly_unemployment()
-    except Exception as e:
-        return f"Error getting monthly unemployment rate data: {str(e)}"
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_nonfarm_payrolls")
-async def get_nonfarm_payrolls_tool() -> dict:
+def get_crude_oil_brent_data(interval: Optional[str]) -> dict:
     """
-    Gets the monthly US All Employees: Total Nonfarm (commonly known as Total Nonfarm Payroll), 
+    Fetch the Brent crude oil prices in daily, weekly, and monthly horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BRENT",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_natural_gas_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the natural Henry Hub gas prices in daily, weekly, and monthly horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "NATURAL_GAS",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_copper_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the copper prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "COPPER",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_aluminum_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the aluminum prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ALUMINUM",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_wheat_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the wheat prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "WHEAT",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_corn_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the corn prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CORN",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_cotton_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the cotton prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "COTTON",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_sugar_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the sugar prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "SUGAR",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_coffee_data(interval: Optional[str]) -> dict: 
+    """
+    Fetch the coffee prices in monthly, quarterly, and annual horizons.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "COFFEE",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_all_commodities_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the global price index of all commodities in monthly, quarterly, and annual temporal dimensions.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ALL_COMMODITIES",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_real_gdp(interval: Optional[str]) -> dict:
+    """
+    Fetch the Real GDP of the US data in quarterly and annual temporal dimensions.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "REAL_GDP",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_real_gdp_per_capita() -> dict:
+    """
+    Fetch the quarterly Real GDP per Capita data of the United States..
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "REAL_GDP_PER_CAPITA",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_treasury_yield(interval: Optional[str], maturity: Optional[str]) -> dict:
+    """
+    Fetch the daily, weekly, and monthly US treasury yield of a given maturity timeline (e.g., 5 year, 30 year, etc).
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TREASURY_YIELD",
+        "interval": interval,
+        "maturity": maturity,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_federal_funds_rate(interval: Optional[str]) -> dict:
+    """
+    Fetch the daily, weekly, and monthly federal funds rate (interest rate) of the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "FEDERAL_FUNDS_RATE",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_cpi_data(interval: Optional[str]) -> dict:
+    """
+    Fetch the monthly and semiannual consumer price index (CPI) of the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CPI",
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_inflation() -> dict:
+    """
+    Fetch the annual inflation rates (consumer prices) of the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "INFLATION",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_retail_sales() -> dict:
+    """
+    Fetch the monthly Advance Retail Sales: Retail Trade data of the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "RETAIL_SALES",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+    
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_durables() -> dict:
+    """
+    Fetch the monthly manufacturers' new orders of durable goods in the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DURABLES",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_monthly_unemployment() -> dict:
+    """
+    Fetch the monthly unemployment rate of the US.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "UNEMPLOYMENT",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_nonfarm_payroll() -> dict:
+    """
+    Fetch the monthly US All Employees: Total Nonfarm (commonly known as Total Nonfarm Payroll), 
     a measure of the number of U.S. workers in the economy that excludes proprietors, private household employees,
     unpaid volunteers, farm employees, and the unincorporated self-employed.
     """
-    try:
-        return get_nonfarm_payroll()
-    except Exception as e:
-        return f"Error getting non-farm payrolls data: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "NONFARM_PAYROLL",
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
     
-@mcp.tool()
-@app.get("/get_sma_data/{symbol}/{series_type}")
-async def get_sma_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Simple Moving Average (SMA) data for a given symbol and series type.
+    if response.status_code == 200:
+        data = response.json()
+        
+    if data:
+        return data
+    else:
+        return {"error": "Failed to fetch data"}
     
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        SMA data
-    """
-    try:
-        return get_sma_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting SMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_ema_data/{symbol}/{series_type}")
-async def get_ema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Exponential Moving Average (EMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        EMA data
-    """
-    try:
-        return get_ema_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting EMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_wma_data/{symbol}/{series_type}")
-async def get_wma_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Weighted Moving Average (WMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        WMA data
-    """
-    try:
-        return get_wma_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting WMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_dema_data/{symbol}/{series_type}")
-async def get_dema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Double Exponential Moving Average (DEMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        DEMA data
-    """
-    try:
-        return get_dema_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting DEMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_tema_data/{symbol}/{series_type}")
-async def get_tema_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Triple Exponential Moving Average (TEMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        TEMA data
-    """
-    try:
-        return get_tema_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting DEMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_trima_data/{symbol}/{series_type}")
-async def get_trima_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Triangular Moving Average (TRIMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        TRIMA data
-    """
-    try:
-        return get_trima_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting TRIMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_kama_data/{symbol}/{series_type}")
-async def get_kama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the Kaufman Adaptive Moving Average (KAMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        KAMA data
-    """
-    try:
-        return get_kama_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting KAMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_mama_data/{symbol}/{series_type}")
-async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the MESA Adaptive Moving Average (MAMA) data for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        MAMA data
-    """
-    try:
-        return get_kama_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
-    
-@mcp.tool()
-@app.get("/get_vwap_data/{symbol}")
-async def get_vwap_data_tool(symbol: str, interval: str = "daily") -> dict:
-    """
-    Gets the Volume Weighted Average Price (VWAP) data for a given symbol.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        VWAP data
-    """
-    try:
-        return get_vwap_values(symbol, interval)
-    except Exception as e:
-        return f"Error getting VWAP data for {symbol}: {str(e)}"
 
-@mcp.tool()
-@app.get("/get_tthree_data/{symbol}/{series_type}")
-async def get_tthree_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+        return {"error": "Failed to fetch data"}
+
+def get_sma_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
-    Gets the Triple Exponential Moving Average (T3) values for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        MAMA data
+    Fetch Simple Moving Average (SMA) values for a given symbol.
     """
-    try:
-        return get_tthree_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_macd_data/{symbol}/{series_type}")
-async def get_macd_data_tool(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "SMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: SMA" in data:
+            return data["Technical Analysis: SMA"]
+        return {"error": "Missing SMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_ema_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Exponential Moving Average (EMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "EMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: EMA" in data:
+            return data["Technical Analysis: EMA"]
+        return {"error": "Missing EMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_wma_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Weighted Moving Average (WMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "WMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: WMA" in data:
+            return data["Technical Analysis: WMA"]
+        return {"error": "Missing WMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_dema_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Double Exponential Moving Average (DEMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DEMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: DEMA" in data:
+            return data["Technical Analysis: DEMA"]
+        return {"error": "Missing DEMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_tema_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Triple Exponential Moving Average (TEMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TEMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TEMA" in data:
+            return data["Technical Analysis: TEMA"]
+        return {"error": "Missing TEMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_trima_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Triangular Moving Average (TRIMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRIMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TRIMA" in data:
+            return data["Technical Analysis: TRIMA"]
+        return {"error": "Missing TRIMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_kama_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Kaufman Adaptive Moving Average (KAMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "KAMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: KAMA" in data:
+            return data["Technical Analysis: KAMA"]
+        return {"error": "Missing KAMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_mama_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch MESA Adaptive Moving Average (MAMA) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MAMA",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MAMA" in data:
+            return data["Technical Analysis: MAMA"]
+        return {"error": "Missing MAMA data"}
+    return {"error": "Failed to fetch data"}
+
+def get_vwap_values(symbol: str, interval: str = "15min") -> dict:
+    """
+    Fetch Volume Weighted Average Price (VWAP) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "VWAP",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: VWAP" in data:
+            return data["Technical Analysis: VWAP"]
+        return {"error": "Missing VWAP data"}
+    return {"error": "Failed to fetch data"}
+
+def get_tthree_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    """
+    Fetch Triple Exponential Moving Average (T3) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "T3",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: T3" in data:
+            return data["Technical Analysis: T3"]
+        return {"error": "Missing T3 data"}
+    return {"error": "Failed to fetch data"}
+
+def get_macd_values(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
                     slowperiod: int = 26, signalperiod: int = 9) -> dict:
     """
-    Gets the Moving Average Convergence Divergence (MACD) values for a given symbol and series type.
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-        fastperiod: Fast period for MACD
-        slowperiod: Slow period for MACD
-        signalperiod: Signal period for MACD
-    Returns:
-        MACD data
+    Fetch Moving Average Convergence Divergence (MACD) values for a given symbol.
     """
-    try: 
-        return get_macd_values(symbol, interval, series_type, fastperiod, slowperiod, signalperiod)
-    except Exception as e:
-        return f"Error getting MACD data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_macdext_data/{symbol}/{series_type}")
-async def get_macdext_data_tool(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
-                    slowperiod: int = 26, signalperiod: int = 9) -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MACD",
+        "symbol": symbol,
+        "interval": interval,
+        "series_type": series_type,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "signalperiod": signalperiod,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MACD" in data:
+            return data["Technical Analysis: MACD"]
+        return {"error": "Missing MACD data"}
+    return {"error": "Failed to fetch data"}
+
+def get_macdext_values(symbol: str, interval: str = "daily", series_type: str = "open", fastperiod: int = 12,
+                       slowperiod: int = 26, signalperiod: int = 9) -> dict:
     """
-    Gets the Moving Average Convergence Divergence (MACDEXT) values for a given symbol and series type.
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-        fastperiod: Fast period for MACDEXT
-        slowperiod: Slow period for MACDEXT
-        signalperiod: Signal period for MACDEXT
-    Returns:
-        MACD data
+    Fetch Moving Average Convergence Divergence (MACD) with controllable moving average type.
     """
-    try: 
-        return get_macdext_values(symbol, interval, series_type, fastperiod, slowperiod, signalperiod)
-    except Exception as e:
-        return f"Error getting MACDEXT data for {symbol} with series type {series_type}: {str(e)}"
+
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_stoch_data/{symbol}/{series_type}")
-async def get_stoch_data_tool(symbol: str, interval: str = "daily", fastk_period: int = 14, slowk_period: int = 3,
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MACDEXT",
+        "symbol": symbol,
+        "interval": interval,
+        "series_type": series_type,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "signalperiod": signalperiod,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MACDEXT" in data:
+            return data["Technical Analysis: MACDEXT"]
+        return {"error": "Missing MACDEXT data"}
+    return {"error": "Failed to fetch data"}
+
+def get_stoch_oscillator_values(symbol: str, interval: str = "daily", fastk_period: int = 14, slowk_period: int = 3,
                                 slowd_period: int = 3, series_type: str = "close") -> dict:
     """
-    Gets the Stochastic Oscillator (STOCH) values for a given symbol and series type.
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-        fastk_period: Fast period for STOCH
-        slowk_period: Slow period for STOCH
-    Returns:
-        MACD data
+    Fetch the Stochastic Oscillator (STOCH) data for a given stock symbol from Alpha Vantage.
     """
-    try: 
-        return get_stoch_oscillator_values(symbol, interval, series_type, fastk_period, slowk_period, slowd_period)
-    except Exception as e:
-        return f"Error getting STOCH data for {symbol} with series type {series_type}: {str(e)}"
 
-@mcp.tool()
-@app.get("/get_stochfast_data/{symbol}")
-async def get_stochf_data_tool(symbol: str, interval: str = "daily", fastk_period: int = 5, fastdperiod: int = 3) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "STOCH",
+        "symbol": symbol,
+        "interval": interval,
+        "fastk_period": fastk_period,
+        "slowk_period": slowk_period,
+        "slowd_period": slowd_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: STOCH" in data:
+            return data["Technical Analysis: STOCH"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_stochf_oscillator_values(symbol: str, interval: str = "daily", fastk_period: int = 5, fastdperiod: int = 3) -> dict:
     """
-    Gets the Stochastic Fast Oscillator (STOCHF) values for a given symbol.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    Returns:
-        STOCHF data
+    Fetch the Stochastic Fast (STOCHF) data for a given stock symbol from Alpha Vantage.
     """
-    try: 
-        return get_stochf_oscillator_values(symbol, interval, fastk_period, fastdperiod)
-    except Exception as e:
-        return f"Error getting STOCHF data for {symbol}: {str(e)}"
+
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_rsi_data/{symbol}/{series_type}")
-async def get_rsi_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "STOCHF",
+        "symbol": symbol,
+        "interval": interval,
+        "fastk_period": fastk_period,
+        "fastd_period": fastdperiod,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: STOCHF" in data:
+            return data["Technical Analysis: STOCHF"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_rsi_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
-    Gets the Relative Strength Index (RSI) values for a given symbol and series type.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        RSI data
+    Fetch Relative Strength Index (RSI) values for a given symbol.
     """
-    try:
-        return get_rsi_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting RSI data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "STOCHF",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
     
-@mcp.tool()
-@app.get("/get_stochrsi_data/{symbol}/{series_type}")
-async def get_stochrsi_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close",
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: RSI" in data:
+            return data["Technical Analysis: RSI"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_stochrsi_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close",
                         fastkperiod: int = 5, fastdperiod: int = 3) -> dict:
     """
-    Gets the Stochastic Relative Strength Index (STOCHRSI) values for a given symbol and series type.
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        series_type: Type of the series (e.g.: close, open, high, low)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    Returns:
-        STOCHRSI data
+    Fetch Stochastic Relative Strength Index (STOCHRSI) values for a given symbol.
     """
-    try:
-        return get_stochrsi_values(symbol, interval, time_period, series_type, fastkperiod, fastdperiod)
-    except Exception as e:
-        return f"Error getting STOCHRSI data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "STOCHRSI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "fastkperiod": fastkperiod,
+        "fastdperiod": fastdperiod,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: STOCHRSI" in data:
+            return data["Technical Analysis: STOCHRSI"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
     
-@mcp.tool()
-@app.get("/get_willr_data/{symbol}")
-async def get_wilrr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
+def get_willr_values(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
     """
-    Gets the Williams %R (WILLR) values for a given symbol.
-    
-    Args:
-        symbol: Stock symbol (e.g.: AAPL, MSFT)
-        interval: Time interval for the data (e.g.: daily, weekly, monthly)
-    
-    Returns:
-        WILLR data
+    Fetch Williams %R (WILLR) values for a given symbol.
     """
-    try:
-        return get_willr_values(symbol, interval, time_period)
-    except Exception as e:
-        return f"Error getting WILLR data for {symbol}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_adx_data/{symbol}/{series_type}")
-async def get_adx_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "WILLR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: WILLR" in data:
+            return data["Technical Analysis: WILLR"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_adx_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
     Fetch Average Directional Movement Index (ADX) values for a given symbol.
     """
-    try:
-        return get_adx_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting ADX data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_adxr_data/{symbol}/{series_type}")
-async def get_adxr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ADX",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: ADX" in data:
+            return data["Technical Analysis: ADX"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+        
+def get_adxr_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
-    Fetch Average Directional Movement Rating Index (ADX) values for a given symbol.
+    Fetch Average Directional Movement Rating Index (ADXR) values for a given symbol.
     """
-    try:
-        return get_adxr_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting ADXR data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_apo_data/{symbol}/{series_type}")
-async def get_apo_data_tool(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ADXR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: ADXR" in data:
+            return data["Technical Analysis: ADXR"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+        
+def get_apo_values(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
                    slowperiod: int = 26) -> dict:
     """
     Fetch Absolute Price Oscillator (APO) values for a given symbol.
     """
-    try:
-        return get_apo_values(symbol, interval, series_type, fastperiod, slowperiod)
-    except Exception as e:
-        return f"Error getting APO data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_ppo_data/{symbol}/{series_type}")
-async def get_ppo_data_tool(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "APO",
+        "symbol": symbol,
+        "interval": interval,
+        "series_type": series_type,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: APO" in data:
+            return data["Technical Analysis: APO"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_ppo_values(symbol: str, interval: str = "daily", series_type: str = "close", fastperiod: int = 12,
                    slowperiod: int = 26) -> dict:
     """
     Fetch Percentage Price Oscillator (PPO) values for a given symbol.
     """
-    try:
-        return get_ppo_values(symbol, interval, series_type, fastperiod, slowperiod)
-    except Exception as e:
-        return f"Error getting PPO data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_mom_data/{symbol}/{series_type}")
-async def get_mom_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PPO",
+        "symbol": symbol,
+        "interval": interval,
+        "series_type": series_type,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: PPO" in data:
+            return data["Technical Analysis: PPO"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_mom_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
     Fetch Momentum (MOM) values for a given symbol.
     """
-    try:
-        return get_mom_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting MOM data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_bop_data/{symbol}")
-async def get_bop_data_tool(symbol: str, interval: str = "daily") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MOM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: MOM" in data:
+            return data["Technical Analysis: MOM"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_bop_values(symbol: str, interval: str = "daily") -> dict:
     """
     Fetch Balance of Power (BOP) values for a given symbol.
     """
-    try:
-        return get_bop_values(symbol, interval)
-    except Exception as e:
-        return f"Error getting BOP data for {symbol}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_cci_data/{symbol}")
-async def get_cci_data_tool(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BOP",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: BOP" in data:
+            return data["Technical Analysis: BOP"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_cci_values(symbol: str, interval: str = "daily", time_period: int = 60) -> dict:
     """
     Fetch Commodity Channel Index (CCI) values for a given symbol.
     """
-    try:
-        return get_cci_values(symbol, interval, time_period)
-    except Exception as e:
-        return f"Error getting CCI data for {symbol}: {str(e)}"
-
-@mcp.tool()
-@app.get("/get_cmo_data/{symbol}/{series_type}")
-async def get_cmo_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CCI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: CCI" in data:
+            return data["Technical Analysis: CCI"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_cmo_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
     Fetch Chande momentum oscillator (CMO) values for a given symbol.
     """
-    try:
-        return get_cmo_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting CMO data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_roc_data/{symbol}/{series_type}")
-async def get_roc_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "CMO",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: CMO" in data:
+            return data["Technical Analysis: CMO"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_roc_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
     Fetch rate of change (ROC) values for a given symbol.
     """
-    try:
-        return get_roc_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting ROC data for {symbol} with series type {series_type}: {str(e)}"
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
-@mcp.tool()
-@app.get("/get_rocr_data/{symbol}/{series_type}")
-async def get_rocr_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ROC",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: ROC" in data:
+            return data["Technical Analysis: ROC"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
+    else:
+        return {"error": "Failed to fetch data"}
+    
+def get_rocr_values(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
     """
     Fetch rate of change ratio (ROCR) values for a given symbol.
     """
-    try:
-        return get_rocr_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting ROCR data for {symbol} with series type {series_type}: {str(e)}"
-
-@mcp.tool()
-@app.get("/get_mama_data/{symbol}/{series_type}")
-async def get_mama_data_tool(symbol: str, interval: str = "daily", time_period: int = 60, series_type: str = "close") -> dict:
-    """
-    Gets the MESA Adaptive Moving Average (MAMA) data for a given symbol and series type.
-    """
-    try:
-        return get_mama_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return f"Error getting MAMA data for {symbol} with series type {series_type}: {str(e)}"
-
-@mcp.tool()
-@app.get("/get_aroon_data/{symbol}")
-async def get_aroon_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_aroon_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting AROON data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_aroonosc_data/{symbol}")
-async def get_aroonosc_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_aroonosc_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting AROONOSC data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_mfi_data/{symbol}")
-async def get_mfi_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_mfi_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MFI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_trix_data/{symbol}/{series_type}")
-async def get_trix_data_tool(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
-    try:
-        return get_trix_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return {"error": f"Error getting TRIX data for {symbol} with series type {series_type}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ultosc_data/{symbol}")
-async def get_ultosc_data_tool(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
-    try:
-        return get_ultosc_values(symbol, interval, timeperiod1, timeperiod2, timeperiod3)
-    except Exception as e:
-        return {"error": f"Error getting ULTOSC data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_dx_data/{symbol}")
-async def get_dx_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_dx_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting DX data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_minus_di_data/{symbol}")
-async def get_minus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_minus_di_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MINUS_DI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_plus_di_data/{symbol}")
-async def get_plus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_plus_di_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting PLUS_DI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_minus_dm_data/{symbol}")
-async def get_minus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_minus_dm_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MINUS_DM data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_plus_dm_data/{symbol}")
-async def get_plus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_plus_dm_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting PLUS_DM data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_aroon_data/{symbol}")
-async def get_aroon_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_aroon_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting AROON data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_aroonosc_data/{symbol}")
-async def get_aroonosc_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_aroonosc_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting AROONOSC data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_mfi_data/{symbol}")
-async def get_mfi_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_mfi_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MFI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_trix_data/{symbol}/{series_type}")
-async def get_trix_data_tool(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
-    try:
-        return get_trix_values(symbol, interval, time_period, series_type)
-    except Exception as e:
-        return {"error": f"Error getting TRIX data for {symbol} with series type {series_type}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ultosc_data/{symbol}")
-async def get_ultosc_data_tool(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
-    try:
-        return get_ultosc_values(symbol, interval, timeperiod1, timeperiod2, timeperiod3)
-    except Exception as e:
-        return {"error": f"Error getting ULTOSC data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_dx_data/{symbol}")
-async def get_dx_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_dx_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting DX data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_minus_di_data/{symbol}")
-async def get_minus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_minus_di_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MINUS_DI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_plus_di_data/{symbol}")
-async def get_plus_di_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_plus_di_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting PLUS_DI data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_minus_dm_data/{symbol}")
-async def get_minus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_minus_dm_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MINUS_DM data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_plus_dm_data/{symbol}")
-async def get_plus_dm_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_plus_dm_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting PLUS_DM data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_bbands_data/{symbol}/{series_type}")
-async def get_bbands_data_tool(symbol: str, interval: str = "daily", time_period: int = 5, series_type: str = "close", nbdevup: float = 2, nbdevdn: float = 2, matype: int = 0) -> dict:
-    try:
-        return get_bbands_values(symbol, interval, time_period, series_type, nbdevup, nbdevdn, matype)
-    except Exception as e:
-        return {"error": f"Error getting BBANDS data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_midpoint_data/{symbol}")
-async def get_midpoint_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_midpoint_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MIDPOINT data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_midprice_data/{symbol}")
-async def get_midprice_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_midprice_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting MIDPRICE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_sar_data/{symbol}")
-async def get_sar_data_tool(symbol: str, interval: str = "daily", acceleration: float = 0.02, maximum: float = 0.2) -> dict:
-    try:
-        return get_sar_values(symbol, interval, acceleration, maximum)
-    except Exception as e:
-        return {"error": f"Error getting SAR data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_trange_data/{symbol}")
-async def get_trange_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_trange_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting TRANGE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_atr_data/{symbol}")
-async def get_atr_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_atr_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting ATR data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_natr_data/{symbol}")
-async def get_natr_data_tool(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
-    try:
-        return get_natr_values(symbol, interval, time_period)
-    except Exception as e:
-        return {"error": f"Error getting NATR data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ad_data/{symbol}")
-async def get_ad_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ad_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting AD data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_adosc_data/{symbol}")
-async def get_adosc_data_tool(symbol: str, interval: str = "daily", fastperiod: int = 3, slowperiod: int = 10) -> dict:
-    try:
-        return get_adosc_values(symbol, interval, fastperiod, slowperiod)
-    except Exception as e:
-        return {"error": f"Error getting ADOSC data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_obv_values/{symbol}")
-async def get_obv_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_obv_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting OBV data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_trendline_data/{symbol}")
-async def get_ht_trendline_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_trendline_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_TRENDLINE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_sine_data/{symbol}")
-async def get_ht_sine_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_sine_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_SINE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_trendmode_data/{symbol}")
-async def get_ht_trendmode_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_trendmode_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_TRENDMODE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_dcperiod_data/{symbol}")
-async def get_ht_dcperiod_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_dcperiod_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_DCPERIOD data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_dcphase_data/{symbol}")
-async def get_ht_dcphase_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_dcphase_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_DCPHASE data for {symbol}: {str(e)}"}
-
-@mcp.tool()
-@app.get("/get_ht_phasor_data/{symbol}")
-async def get_ht_phasor_data_tool(symbol: str, interval: str = "daily") -> dict:
-    try:
-        return get_ht_phasor_values(symbol, interval)
-    except Exception as e:
-        return {"error": f"Error getting HT_PHASOR data for {symbol}: {str(e)}"}
-
-
-# Run the server
-if __name__ == "__main__":
-    transport = "sse"
-    if transport == "stdio":
-        print("Running mcp server with stdio transport")
-        mcp.run(transport="stdio")
-    elif transport == "sse":
-        print("Running server with SSE transport")
-        mcp.run(transport="sse")
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ROCR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Check if the data contains the required information
+        if "Technical Analysis: ROCR" in data:
+            return data["Technical Analysis: ROCR"]
+        else:
+            return {"error": "Invalid data returned or no data available"}
     else:
-        raise ValueError(f"Unknown transport: {transport}")
+        return {"error": "Failed to fetch data"}
+
+def get_aroon_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AROON",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: AROON" in data:
+            return data["Technical Analysis: AROON"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_aroonosc_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AROONOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: AROONOSC" in data:
+            return data["Technical Analysis: AROONOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_mfi_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MFI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MFI" in data:
+            return data["Technical Analysis: MFI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_trix_values(symbol: str, interval: str = "daily", time_period: int = 15, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRIX",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TRIX" in data:
+            return data["Technical Analysis: TRIX"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_ultosc_values(symbol: str, interval: str = "daily", timeperiod1: int = 7, timeperiod2: int = 14, timeperiod3: int = 28) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ULTOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "timeperiod1": timeperiod1,
+        "timeperiod2": timeperiod2,
+        "timeperiod3": timeperiod3,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ULTOSC" in data:
+            return data["Technical Analysis: ULTOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_dx_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "DX",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: DX" in data:
+            return data["Technical Analysis: DX"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+
+def get_minus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DI" in data:
+            return data["Technical Analysis: MINUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPRICE
+
+def get_midprice_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPRICE",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPRICE" in data:
+            return data["Technical Analysis: MIDPRICE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_plus_di_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DI",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DI" in data:
+            return data["Technical Analysis: PLUS_DI"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MINUS_DM
+
+def get_minus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MINUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MINUS_DM" in data:
+            return data["Technical Analysis: MINUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# PLUS_DM
+
+def get_plus_dm_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "PLUS_DM",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: PLUS_DM" in data:
+            return data["Technical Analysis: PLUS_DM"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# BBANDS
+
+def get_bbands_values(symbol: str, interval: str = "daily", time_period: int = 20, series_type: str = "close") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "BBANDS",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "series_type": series_type,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: BBANDS" in data:
+            return data["Technical Analysis: BBANDS"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPOINT
+
+def get_midpoint_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPOINT",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPOINT" in data:
+            return data["Technical Analysis: MIDPOINT"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# MIDPRICE
+
+def get_midprice_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "MIDPRICE",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: MIDPRICE" in data:
+            return data["Technical Analysis: MIDPRICE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# SAR
+
+def get_sar_values(symbol: str, interval: str = "daily", acceleration: float = 0.02, maximum: float = 0.2) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "SAR",
+        "symbol": symbol,
+        "interval": interval,
+        "acceleration": acceleration,
+        "maximum": maximum,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: SAR" in data:
+            return data["Technical Analysis: SAR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# TRANGE
+
+def get_trange_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "TRANGE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: TRANGE" in data:
+            return data["Technical Analysis: TRANGE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# ATR
+
+def get_atr_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ATR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ATR" in data:
+            return data["Technical Analysis: ATR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# NATR
+
+def get_natr_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "NATR",
+        "symbol": symbol,
+        "interval": interval,
+        "time_period": time_period,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: NATR" in data:
+            return data["Technical Analysis: NATR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# AD
+
+def get_ad_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "AD",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: Chaikin A/D" in data:
+            return data["Technical Analysis: Chaikin A/D"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# ADOSC
+
+def get_adosc_values(symbol: str, interval: str = "daily", fastperiod: int = 3, slowperiod: int = 10) -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "ADOSC",
+        "symbol": symbol,
+        "interval": interval,
+        "fastperiod": fastperiod,
+        "slowperiod": slowperiod,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: ADOSC" in data:
+            return data["Technical Analysis: ADOSC"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_obv_values(symbol: str, interval: str = "daily") -> dict:
+    """
+    Fetch On Balance Volume (OBV) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "OBV",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: OBV" in data:
+            return data["Technical Analysis: OBV"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_TRENDLINE
+
+def get_ht_trendline_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_TRENDLINE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_TRENDLINE" in data:
+            return data["Technical Analysis: HT_TRENDLINE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_SINE
+
+def get_ht_sine_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_SINE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_SINE" in data:
+            return data["Technical Analysis: HT_SINE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_TRENDMODE
+
+def get_ht_trendmode_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_TRENDMODE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_TRENDMODE" in data:
+            return data["Technical Analysis: HT_TRENDMODE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_DCPERIOD
+
+def get_ht_dcperiod_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_DCPERIOD",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_DCPERIOD" in data:
+            return data["Technical Analysis: HT_DCPERIOD"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_DCPHASE
+
+def get_ht_dcphase_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_DCPHASE",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_DCPHASE" in data:
+            return data["Technical Analysis: HT_DCPHASE"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+# HT_PHASOR
+
+def get_ht_phasor_values(symbol: str, interval: str = "daily") -> dict:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "HT_PHASOR",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: HT_PHASOR" in data:
+            return data["Technical Analysis: HT_PHASOR"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}
+
+def get_obv_values(symbol: str, interval: str = "daily") -> dict:
+    """
+    Fetch On Balance Volume (OBV) values for a given symbol.
+    """
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
+        return "Error: ALPHA_VANTAGE_API_KEY not configured"
+    
+    url = "https://www.alphavantage.co/query"
+    params = {
+        "function": "OBV",
+        "symbol": symbol,
+        "interval": interval,
+        "apikey": api_key
+    }
+    
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if "Technical Analysis: OBV" in data:
+            return data["Technical Analysis: OBV"]
+        return {"error": "Invalid data returned or no data available"}
+    return {"error": "Failed to fetch data"}    
+
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+def chat_with_gpt(prompt: str) -> str:
+    """Interact with ChatGPT (OpenAI API) to generate responses."""
+    try:
+        response = client.completions.create(
+            model="gpt-4o-mini",  # barato
+            prompt=prompt,
+            max_tokens=150,
+            temperature=0.2  # randomness of the output
+        )
+        return response.choices[0].text.strip()  # Return the generated text
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
