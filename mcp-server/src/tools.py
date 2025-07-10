@@ -2,8 +2,10 @@ import os
 import requests
 from dotenv import load_dotenv
 from typing import Optional
+from openai import OpenAI
 
 # Load environment variables
+api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
 
 load_dotenv()
 
@@ -11,8 +13,8 @@ def get_current_price(symbol: str) -> str:
     """
     Gets the current price of a stock from Alpha Vantage API.
     """
-    apikey = os.getenv("ALPHA_VANTAGE_API_KEY")
-    if not apikey:
+    api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not api_key:
         return "Error: ALPHA_VANTAGE_API_KEY not configured"
     
     url = (
@@ -57,7 +59,7 @@ def get_stock_price(symbol: str) -> dict:
         "function": "TIME_SERIES_INTRADAY",
         "symbol": symbol,
         "interval": "1min",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -76,7 +78,7 @@ def get_intraday(symbol: str, interval: Optional[str] = "1min") -> dict:
         "function": "TIME_SERIES_INTRADAY",
         "symbol": symbol,
         "interval": interval,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -94,7 +96,7 @@ def get_daily_adjusted(symbol: str) -> dict:
     params = {
         "function": "TIME_SERIES_DAILY_ADJUSTED",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -112,7 +114,7 @@ def get_weekly(symbol: str) -> dict:
     params = {
         "function": "TIME_SERIES_WEEKLY",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -130,7 +132,7 @@ def get_weekly_adjusted(symbol: str) -> dict:
     params = {
         "function": "TIME_SERIES_WEEKLY_ADJUSTED",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -148,7 +150,7 @@ def get_monthly(symbol: str) -> dict:
     params = {
         "function": "TIME_SERIES_MONTHLY",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -166,7 +168,7 @@ def get_monthly_adjusted(symbol: str) -> dict:
     params = {
         "function": "TIME_SERIES_MONTHLY_ADJUSTED",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -184,7 +186,7 @@ def get_quote(symbol: str) -> dict:
     params = {
         "function": "GLOBAL_QUOTE",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -201,7 +203,7 @@ def get_market_status() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "MARKET_STATUS",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -230,7 +232,7 @@ def get_news_sentiment(symbol: str) -> dict:
     params = {
         "function": "NEWS_SENTIMENT",
         "tickers": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -248,7 +250,7 @@ def get_earnings_transcript(symbol: str) -> dict:
     params = {
         "function": "EARNINGS_CALL_TRANSCRIPT",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -265,7 +267,7 @@ def get_top_gainers_losers() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "TOP_GAINERS_LOSERS",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -283,7 +285,7 @@ def get_insider_transactions(symbol: str) -> dict:
     params = {
         "function": "INSIDER_TRADING",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -306,7 +308,7 @@ def get_analytics_fixed(symbol: str, function: str,
         "interval": interval,
         "time_period": time_period,
         "series_type": series_type,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -329,7 +331,7 @@ def get_analytics_sliding(symbol: str, function: str,
         "interval": interval,
         "time_period": time_period,
         "series_type": series_type,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -347,7 +349,7 @@ def get_fundamental_data(symbol: str) -> dict:
     params = {
         "function": "OVERVIEW",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -364,7 +366,7 @@ def get_company_overview_trending() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "TRENDING_COMPANY_OVERVIEW",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -382,7 +384,7 @@ def get_etf_profile_and_holdings(symbol: str) -> dict:
     params = {
         "function": "ETF_HOLDINGS",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -400,7 +402,7 @@ def get_corporate_action_dividends(symbol: str) -> dict:
     params = {
         "function": "DIVIDEND_HISTORY",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -418,7 +420,7 @@ def get_corporate_action_splits(symbol: str) -> dict:
     params = {
         "function": "SPLIT_HISTORY",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -436,7 +438,7 @@ def get_income_statement(symbol: str) -> dict:
     params = {
         "function": "INCOME_STATEMENT",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -454,7 +456,7 @@ def get_balance_sheet(symbol: str) -> dict:
     params = {
         "function": "BALANCE_SHEET",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -472,7 +474,7 @@ def get_cash_flow(symbol: str) -> dict:
     params = {
         "function": "CASH_FLOW",
         "symbol": symbol,
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -489,7 +491,7 @@ def get_earnings_trending() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "EARNINGS_TRENDING",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -506,7 +508,7 @@ def get_listing_delisting_status() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "LISTING_STATUS",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -523,7 +525,7 @@ def get_earnings_calendar() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "EARNINGS_CALENDAR",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -540,7 +542,7 @@ def get_ipo_calendar() -> dict:
     url = "https://www.alphavantage.co/query"
     params = {
         "function": "IPO_CALENDAR",
-        "apikey": API_KEY
+        "apikey": api_key
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
@@ -1916,7 +1918,7 @@ def get_rocr_values(symbol: str, interval: str = "daily", time_period: int = 60,
             return {"error": "Invalid data returned or no data available"}
     else:
         return {"error": "Failed to fetch data"}
-    
+
 def get_aroon_values(symbol: str, interval: str = "daily", time_period: int = 14) -> dict:
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
     if not api_key:
@@ -2814,3 +2816,18 @@ def get_obv_values(symbol: str, interval: str = "daily") -> dict:
             return data["Technical Analysis: OBV"]
         return {"error": "Invalid data returned or no data available"}
     return {"error": "Failed to fetch data"}    
+
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+def chat_with_gpt(prompt: str) -> str:
+    """Interact with ChatGPT (OpenAI API) to generate responses."""
+    try:
+        response = client.completions.create(
+            model="gpt-4o-mini",  # barato
+            prompt=prompt,
+            max_tokens=150,
+            temperature=0.2  # randomness of the output
+        )
+        return response.choices[0].text.strip()  # Return the generated text
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
